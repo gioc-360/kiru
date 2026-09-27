@@ -1,0 +1,153 @@
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=device-width, initial-scale=1, maximum-scale=1, user-scalable=no, viewport-fit=cover">
+<meta name="theme-color" content="#1A2040">
+<meta name="apple-mobile-web-app-capable" content="yes">
+<meta name="mobile-web-app-capable" content="yes">
+<meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+<link rel="icon" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 100 100'%3E%3Crect width='100' height='100' rx='22' fill='%231A2040'/%3E%3Ctext x='50' y='74' font-size='70' text-anchor='middle' fill='%23F06896' font-family='serif' font-weight='900'%3E%E6%96%AC%3C/text%3E%3C/svg%3E">
+<title>斬 KIRU</title>
+<style>
+  :root {
+    --navy: #1A2040; --pink: #F06896; --lavender: #B0A8C8; --gold: #F0B860;
+    --green: #88C8A0; --red: #D81C2F; --cream: #FFF8F0;
+    --ui: system-ui, -apple-system, "Hiragino Sans", "Noto Sans JP", sans-serif;
+    --mincho: "Hiragino Mincho ProN", "Yu Mincho", "Noto Serif JP", "Noto Serif CJK JP", serif;
+  }
+  * { box-sizing: border-box; margin: 0; padding: 0; -webkit-tap-highlight-color: transparent; }
+  html, body {
+    position: fixed; inset: 0; overflow: hidden; overscroll-behavior: none;
+    touch-action: none; user-select: none; -webkit-user-select: none; -webkit-touch-callout: none;
+    font-family: var(--ui); color: var(--cream);
+    background:
+      radial-gradient(ellipse at 20% 80%, rgba(240,104,150,0.10), transparent 60%),
+      radial-gradient(ellipse at 80% 15%, rgba(176,168,200,0.08), transparent 55%),
+      linear-gradient(180deg, #1A2040 0%, #1E2550 45%, #221848 100%);
+  }
+  canvas#game { position: fixed; inset: 0; width: 100%; height: 100%; display: block; }
+  .screen {
+    position: fixed; inset: 0; display: none; flex-direction: column; align-items: center; justify-content: center;
+    padding: max(24px, env(safe-area-inset-top)) 28px max(24px, env(safe-area-inset-bottom)); text-align: center; gap: 14px;
+  }
+  .screen.on { display: flex; }
+  .title { line-height: 1; }
+  .title .kanji {
+    font-family: var(--mincho); font-weight: 900; font-size: 30vw; max-height: 34vh; color: var(--pink); display: block;
+    text-shadow: 0 0 40px rgba(240,104,150,0.5), 0 0 80px rgba(240,104,150,0.2), 0 2px 0 #A04060;
+  }
+  .title .latin {
+    font-weight: 900; letter-spacing: 0.35em; font-size: 7vw; color: var(--lavender); margin-left: 0.35em;
+    text-shadow: 0 0 30px rgba(176,168,200,0.4), 0 2px 0 #6A6290;
+  }
+  .tag { color: rgba(255,248,240,0.75); font-size: 16px; }
+  .legend { display: flex; gap: 18px; font-size: 15px; color: rgba(255,248,240,0.85); }
+  .legend b { font-weight: 800; }
+  .legend .g { color: var(--green); } .legend .r { color: #FF6B7A; } .legend .y { color: var(--gold); }
+  input#name {
+    width: min(80vw, 320px); font: 600 20px var(--ui); text-align: center; color: var(--cream);
+    background: rgba(255,248,240,0.08); border: 1.5px solid rgba(176,168,200,0.45); border-radius: 14px;
+    padding: 14px 16px; outline: none; user-select: text; -webkit-user-select: text; touch-action: manipulation;
+  }
+  input#name:focus { border-color: var(--pink); background: rgba(255,248,240,0.12); }
+  input#name::placeholder { color: rgba(255,248,240,0.4); }
+  button.cta {
+    width: min(80vw, 320px); font: 900 22px var(--ui); letter-spacing: 0.12em; color: #fff; border: 0; border-radius: 14px;
+    padding: 16px; background: linear-gradient(135deg, #F06896, #F47EAA); box-shadow: 0 8px 24px rgba(240,104,150,0.35);
+    touch-action: manipulation;
+  }
+  button.cta:active { background: #C8507A; transform: translateY(1px); }
+  button.cta:disabled { background: rgba(176,168,200,0.25); box-shadow: none; color: rgba(255,248,240,0.55); }
+  .status { min-height: 1.4em; font-size: 15px; color: var(--lavender); max-width: 320px; }
+  .status.warn { color: var(--gold); }
+  .foot { position: absolute; bottom: max(14px, env(safe-area-inset-bottom)); font-size: 12px; letter-spacing: 0.08em; color: rgba(240,184,96,0.45); }
+  #count .n {
+    font-family: var(--mincho); font-weight: 900; font-size: 42vw; color: var(--pink);
+    text-shadow: 0 0 40px rgba(240,104,150,0.5), 0 2px 0 #A04060; animation: pop 0.8s ease-out both;
+  }
+  #count .who { font-size: 18px; color: var(--lavender); }
+  @keyframes pop { 0% { transform: scale(1.6); opacity: 0; } 25% { transform: scale(1); opacity: 1; } 100% { transform: scale(0.9); opacity: 0.9; } }
+  #hud { position: fixed; inset: 0; pointer-events: none; display: none; }
+  #hud.on { display: block; }
+  #hud .row {
+    position: absolute; left: 0; right: 0; top: max(10px, env(safe-area-inset-top)); display: flex;
+    justify-content: space-between; align-items: flex-start; padding: 0 18px;
+  }
+  #hud .score { font: 900 40px var(--ui); color: var(--cream); text-shadow: 0 2px 10px rgba(0,0,0,0.5); }
+  #hud .mult { font: 900 18px var(--ui); color: var(--gold); display: none; }
+  #hud .mult.on { display: block; animation: pulse 0.5s ease-in-out infinite alternate; }
+  #hud .time { font: 800 30px var(--ui); color: var(--lavender); font-variant-numeric: tabular-nums; }
+  #hud .time.panic { color: #FF5A6A; }
+  #hud .bar { position: absolute; left: 18px; right: 18px; top: calc(max(10px, env(safe-area-inset-top)) + 54px); height: 5px; border-radius: 3px; background: rgba(255,255,255,0.1); overflow: hidden; }
+  #hud .bar i { display: block; height: 100%; width: 100%; background: linear-gradient(90deg, var(--pink), var(--gold)); transform-origin: left; }
+  #hud .banner {
+    position: absolute; left: 0; right: 0; top: 30%; text-align: center; font: 900 30px var(--ui); letter-spacing: 0.06em;
+    opacity: 0; text-shadow: 0 0 24px rgba(0,0,0,0.6);
+  }
+  #hud .banner small { display: block; font-size: 16px; letter-spacing: 0.1em; color: var(--lavender); margin-top: 4px; }
+  #hud .banner.show { animation: banner 1.6s ease-out both; }
+  @keyframes banner { 0% { opacity: 0; transform: scale(1.3); } 15% { opacity: 1; transform: scale(1); } 75% { opacity: 1; } 100% { opacity: 0; } }
+  @keyframes pulse { from { transform: scale(1); } to { transform: scale(1.12); } }
+  #panic { position: fixed; inset: 0; pointer-events: none; box-shadow: inset 0 0 0 6px rgba(216,28,47,0.8), inset 0 0 40px rgba(216,28,47,0.5); opacity: 0; }
+  #panic.on { animation: panic 0.5s ease-in-out infinite alternate; }
+  @keyframes panic { from { opacity: 0.25; } to { opacity: 1; } }
+  #over .label { font-size: 15px; letter-spacing: 0.3em; color: var(--lavender); }
+  #over .big { font: 900 26vw var(--ui); line-height: 1; color: var(--cream); text-shadow: 0 0 40px rgba(240,104,150,0.45); }
+  #over .rank { font: 800 22px var(--ui); color: var(--gold); min-height: 1.3em; }
+  #over .stats { font-size: 15px; color: rgba(255,248,240,0.7); }
+  #over .look { font-size: 15px; color: var(--lavender); margin-top: 6px; }
+  #rotate { position: fixed; inset: 0; display: none; align-items: center; justify-content: center; flex-direction: column; gap: 12px; background: #1A2040; z-index: 10; font-size: 18px; text-align: center; padding: 24px; }
+  #rotate .phone { font-size: 56px; }
+  @media (orientation: landscape) and (max-height: 520px) { #rotate { display: flex; } }
+</style>
+</head>
+<body>
+<canvas id="game"></canvas>
+
+<section class="screen on" id="join">
+  <div class="title"><span class="kanji">斬</span><span class="latin">KIRU</span></div>
+  <p class="tag">Slice the food. Dodge the bombs.</p>
+  <div class="legend"><span>🍣 <b class="g">+10</b></span><span>💣 <b class="r">−30</b></span><span>⭐ <b class="y">×2</b></span></div>
+  <input id="name" maxlength="12" placeholder="Your name" autocomplete="nickname" autocapitalize="words" enterkeyhint="go" spellcheck="false">
+  <button class="cta" id="play" disabled>PLAY</button>
+  <p class="status" id="status">Connecting…</p>
+  <p class="foot">Johnson Japan Club · Cornell</p>
+</section>
+
+<section class="screen" id="count">
+  <div class="n" id="countN">3</div>
+  <p class="who">Watch the big screen too 👀</p>
+</section>
+
+<div id="hud">
+  <div class="row">
+    <div><div class="score" id="score">0</div><div class="mult" id="mult">×2 FRENZY</div></div>
+    <div class="time" id="time">21</div>
+  </div>
+  <div class="bar"><i id="bar"></i></div>
+  <div class="banner" id="banner"></div>
+</div>
+<div id="panic"></div>
+
+<section class="screen" id="over">
+  <p class="label">YOUR SCORE</p>
+  <div class="big" id="final">0</div>
+  <p class="rank" id="rank">Saving your score…</p>
+  <p class="stats" id="stats"></p>
+  <button class="cta" id="again">PLAY AGAIN</button>
+  <p class="look">Check the leaderboard on the big screen.</p>
+  <p class="foot">Johnson Japan Club · Cornell</p>
+</section>
+
+<section class="screen" id="lost">
+  <div class="title"><span class="kanji" style="font-size:22vw">切</span></div>
+  <p class="tag" id="lostMsg">Connection dropped. This round won't count.</p>
+  <button class="cta" id="retry">TRY AGAIN</button>
+</section>
+
+<div id="rotate"><div class="phone">📱</div><p>Turn your phone upright to play.</p></div>
+
+<script type="module" src="/play.js"></script>
+</body>
+</html>

@@ -1,0 +1,31 @@
+{
+  "name": "kiru",
+  "version": "1.0.0",
+  "private": true,
+  "description": "Kiru — Fruit Ninja-style booth game for the Johnson Japan Club. Phone plays, laptop shows the crowd.",
+  "type": "module",
+  "engines": {
+    "node": ">=20"
+  },
+  "scripts": {
+    "start": "node server.js",
+    "booth": "node server.js --tunnel",
+    "test": "node --test \"test/*.test.js\"",
+    "lint": "node scripts/check-syntax.js",
+    "sim": "node scripts/sim.js",
+    "e2e": "node test-e2e/e2e.js",
+    "verify": "npm run lint && npm test && npm run e2e",
+    "reset-scores": "node scripts/reset-scores.js",
+    "test:engine": "node --test test/engine.test.js",
+    "test:server": "node --test test/server.test.js",
+    "e2e:tunnel": "KIRU_E2E_TUNNEL=1 node test-e2e/e2e.js",
+    "stats": "node scripts/stats.js"
+  },
+  "dependencies": {
+    "qrcode": "1.5.4",
+    "ws": "8.22.0"
+  },
+  "devDependencies": {
+    "playwright-core": "1.63.0"
+  }
+}
